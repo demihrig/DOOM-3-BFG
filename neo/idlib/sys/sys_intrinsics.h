@@ -155,6 +155,8 @@ ID_INLINE_EXTERN int CACHE_LINE_CLEAR_OVERFLOW_COUNT( int size ) {
 #define R_SHUFFLE_D( x, y, z, w )	(( (w) & 3 ) << 6 | ( (z) & 3 ) << 4 | ( (y) & 3 ) << 2 | ( (x) & 3 ))
 #endif
 
+
+#ifdef WIN32
 // make the intrinsics "type unsafe"
 typedef union __declspec(intrin_type) _CRT_ALIGN(16) __m128c {
 				__m128c() {}
@@ -165,6 +167,20 @@ typedef union __declspec(intrin_type) _CRT_ALIGN(16) __m128c {
 	__m128		m128;
 	__m128i		m128i;
 } __m128c;
+
+#else
+
+__attribute__(( aligned (16) )) typedef union __m128c {
+				__m128c() {}
+				__m128c( __m128 f ) { m128 = f; }
+				__m128c( __m128i i ) { m128i = i; }
+	operator	__m128() { return m128; }
+	operator	__m128i() { return m128i; }
+	__m128		m128;
+	__m128i		m128i;
+} __m128c;
+
+#endif
 
 #define _mm_madd_ps( a, b, c )				_mm_add_ps( _mm_mul_ps( (a), (b) ), (c) )
 #define _mm_nmsub_ps( a, b, c )				_mm_sub_ps( (c), _mm_mul_ps( (a), (b) ) )

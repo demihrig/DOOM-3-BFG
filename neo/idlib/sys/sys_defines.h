@@ -75,7 +75,25 @@ If you have questions concerning this license or the applicable additional terms
 	#define ID_WIN32
 	#define ID_LITTLE_ENDIAN
 #else
-#error Unknown Platform
+
+	#if defined(__GNUC__)
+		//TODO
+
+		#define ID_LIN64
+
+		#define USE_LIN_NET
+		#define ID_GL_HARDLINK
+		
+		#define _CRT_ALIGN(x) __attribute__((aligned(x)))
+
+		//intrinsic vector lib
+		#include <immintrin.h>
+		
+		#define PORT_PC_LIN
+	#else
+		#error Unknown Platform
+	#endif
+
 #endif
 
 #define ID_OPENGL
@@ -121,6 +139,51 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef WIN32
 	#define WIN32
 #endif
+
+#endif
+
+#ifdef PORT_PC_LIN
+
+#define	CPUSTRING						"x86-64"
+
+#define	BUILD_STRING					"lin-" CPUSTRING
+#define BUILD_OS_ID						0
+
+#define ALIGN16( x )					__attribute__((aligned(16))) x
+#define ALIGNTYPE16						__attribute__((aligned(16)))
+#define ALIGNTYPE128					__attribute__((aligned(128)))
+#define FORMAT_PRINTF( x )
+
+//these three symbols were supprisingly forward thinking
+#define PATHSEPARATOR_STR				"/"
+#define PATHSEPARATOR_CHAR				'/'
+#define NEWLINE							"\n"
+
+#define ID_INLINE						inline
+#define ID_FORCE_INLINE					__attribute__((always_inline))
+
+// lint complains that extern used with definition is a hazard, but it
+// has the benefit (?) of making it illegal to take the address of the function
+#ifdef _lint
+#define ID_INLINE_EXTERN				inline
+#define ID_FORCE_INLINE_EXTERN			__attribute__((always_inline))
+#else
+#define ID_INLINE_EXTERN				extern inline
+#define ID_FORCE_INLINE_EXTERN			extern __attribute__((always_inline))
+#endif
+
+#define NO_RETURN __attribute__((noreturn))
+#define __fastcall __attribute__((fastcall))
+
+//for the moment wine is required
+//im including this file so types like UINT_T are properly defined
+#include <basetsd.h>
+
+#define HANDLE void*
+
+#include <alloca.h>
+
+#define _alloca(size) alloca(size)
 
 #endif
 
@@ -192,7 +255,13 @@ bulk of the codebase, so it is the best place for analyze pragmas.
 // guaranteed to be false in the following code
 #define NO_RETURN __declspec(noreturn)
 
+#else
+
+#define	VERIFY_FORMAT_STRING
+
 #endif
+
+
 
 // I don't want to disable "warning C6031: Return value ignored" from /analyze
 // but there are several cases with sprintf where we pre-initialized the variables

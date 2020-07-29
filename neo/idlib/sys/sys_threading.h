@@ -25,10 +25,13 @@ If you have questions concerning this license or the applicable additional terms
 
 ===========================================================================
 */
+
+
+
 #ifndef __SYS_THREADING_H__
 #define __SYS_THREADING_H__
 
-#ifndef __TYPEINFOGEN__
+#if !defined(__TYPEINFOGEN__) && defined(WIN32)
 
 /*
 ================================================================================================
@@ -86,6 +89,47 @@ If you have questions concerning this license or the applicable additional terms
 
 #define ID_TLS idSysThreadLocalStorage
 
+#else
+	//pthread specific implementation
+	
+	#include <pthread.h>
+	#include <stddef.h>
+	#include <stdint.h>
+	//#include <asm/system.h>
+
+	typedef pthread_mutex_t mutexHandle_t;
+	typedef pthread_t signalHandle_t;
+	typedef long int interlockedInt_t;
+
+	//TODO
+	#define MemmoryBarrier() 
+
+	#define SYS_MEMORYBARRIER asm volatile ("" : : : "memory"); MemmoryBarrier()
+
+	class idSysThreadLocalStorage {
+	public:
+		idSysThreadLocalStorage() { 
+			pthread_key_create(&tlsIndex, NULL);
+		}
+		idSysThreadLocalStorage( const ptrdiff_t &val ) {
+			pthread_key_create(&tlsIndex, NULL);
+			
+			pthread_setspecific(tlsIndex, (void*)val);
+		}
+		~idSysThreadLocalStorage() {
+			pthread_key_delete(tlsIndex);
+		}
+		operator ptrdiff_t() {
+			return (ptrdiff_t)pthread_getspecific(tlsIndex);
+		}
+		const ptrdiff_t & operator = ( const ptrdiff_t &val ) {
+			pthread_setspecific(tlsIndex, (void*)val);
+			return val;
+		}
+		pthread_key_t tlsIndex;
+	};
+
+	#define ID_TLS idSysThreadLocalStorage
 
 #endif // __TYPEINFOGEN__
 
